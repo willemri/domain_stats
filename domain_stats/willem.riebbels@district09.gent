@@ -67,7 +67,7 @@ def import_domain_rec(import_rec, never_expire=False):
 
 
 def whois_patch_domain(domain, alerts, freq=None):
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now(datetime.timezone.utc)
     try:
        who_rec = whois.whois(domain)
     except:
@@ -84,8 +84,12 @@ def whois_patch_domain(domain, alerts, freq=None):
     if not isinstance(created, datetime.datetime):
         print(f"{created} is not datetime")
         return 0
-    created = created.replace(tzinfo=datetime.timezone.utc)
-    domain_age_seconds = (now - created).total_seconds()
+    if created.tzinfo is None:
+        created = created.replace(tzinfo=datetime.timezone.utc)
+    try:
+      domain_age_seconds = (now - created).total_seconds()
+    except Exception as e:
+      if args.verbose: print(f"Error retrieving WHOIS record for {domain}: {e}")
     expires = who_rec.get("expiration_date")
     if not expires:
         if args.verbose: print(f"No expiration date found for {domain}")
